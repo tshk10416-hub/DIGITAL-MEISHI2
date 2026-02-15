@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>名刺データ作成ツール</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 500px; margin: 0 auto; }
+        label { display: block; margin-top: 10px; font-weight: bold; }
+        input, textarea { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #4A90E2; color: white; border: none; font-size: 16px; margin-top: 20px; cursor: pointer; border-radius: 5px;}
+        #resultArea { margin-top: 20px; padding: 10px; background: #eee; word-break: break-all; display: none; }
+    </style>
+</head>
+<body>
+    <h2>📇 デジタル名刺メーカー</h2>
+    <p>情報を入力して「URL生成」を押してください。</p>
+
+    <label>お名前</label>
+    <input type="text" id="name" placeholder="例：山田 太郎">
+
+    <label>肩書き</label>
+    <input type="text" id="job" placeholder="例：代表取締役 / エンジニア">
+
+    <label>会社名・所属</label>
+    <input type="text" id="company" placeholder="例：株式会社〇〇">
+
+    <label>自己紹介・PR</label>
+    <textarea id="bio" rows="3" placeholder="短い自己紹介..."></textarea>
+
+    <label>Webサイト URL</label>
+    <input type="url" id="website" placeholder="https://...">
+
+    <label>X (Twitter) ID</label>
+    <input type="text" id="twitter" placeholder="@なしで入力 (例: elonmusk)">
+
+    <button onclick="generateURL()">🔗 NFC用URLを生成する</button>
+
+    <div id="resultArea">
+        <p><strong>以下のURLをコピーしてNFCに書き込んでください：</strong></p>
+        <p id="generatedUrl"></p>
+        <button onclick="copyToClipboard()" style="background:#333; margin-top:10px;">コピーする</button>
+    </div>
+
+    <script>
+        function generateURL() {
+            // ベースとなるURL（GitHub Pagesの公開URLに合わせて変更してください）
+            // 例: https://yourname.github.io/digital-card/
+            const baseURL = window.location.href.replace('maker.html', 'index.html');
+
+            const params = new URLSearchParams();
+            if(document.getElementById('name').value) params.set('n', document.getElementById('name').value);
+            if(document.getElementById('job').value) params.set('j', document.getElementById('job').value);
+            if(document.getElementById('company').value) params.set('c', document.getElementById('company').value);
+            if(document.getElementById('bio').value) params.set('b', document.getElementById('bio').value);
+            if(document.getElementById('website').value) params.set('w', document.getElementById('website').value);
+            if(document.getElementById('twitter').value) params.set('t', document.getElementById('twitter').value);
+
+            const finalURL = baseURL + "?" + params.toString();
+            
+            document.getElementById('generatedUrl').innerText = finalURL;
+            document.getElementById('resultArea').style.display = 'block';
+        }
+
+        function copyToClipboard() {
+            const urlText = document.getElementById('generatedUrl').innerText;
+            navigator.clipboard.writeText(urlText).then(() => {
+                alert("URLをコピーしました！NFC Toolsアプリで書き込んでください。");
+            });
+        }
+    </script>
+</body>
+</html>

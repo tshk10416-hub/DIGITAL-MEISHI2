@@ -3,41 +3,222 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Card</title>
+    <title>Digital Identity</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* 前回と同じスタイルですが、初期状態を「読み込み中」にします */
-        :root { --bg-color: #f4f4f9; --card-bg: #ffffff; --text-main: #333; --text-sub: #777; --accent-color: #4A90E2; }
-        body { margin: 0; padding: 0; font-family: 'Helvetica Neue', Arial, sans-serif; background-color: var(--bg-color); display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .card-container { width: 100%; max-width: 400px; background-color: var(--card-bg); border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 40px 20px; text-align: center; margin: 20px; opacity: 0; transition: 1s; } /* 初期は透明 */
-        .profile-img { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid var(--accent-color); margin-bottom: 20px; background: #eee;}
-        h1 { font-size: 24px; color: var(--text-main); margin: 0 0 5px 0; }
-        .job-title { font-size: 16px; color: var(--accent-color); font-weight: bold; margin-bottom: 5px; display: block; }
-        .company-name { font-size: 14px; color: #555; margin-bottom: 15px; display: block; font-weight: bold;}
-        .bio { font-size: 14px; color: var(--text-sub); line-height: 1.6; margin-bottom: 30px; padding: 0 10px; }
-        .links-container { display: flex; flex-direction: column; gap: 15px; }
-        .link-btn { display: none; align-items: center; justify-content: center; padding: 15px; background-color: #f8f9fa; color: var(--text-main); text-decoration: none; border-radius: 12px; transition: 0.3s; border: 1px solid #eee; font-weight: 500; }
-        .link-btn:hover { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
-        .link-btn i { margin-right: 10px; font-size: 18px; }
+        /* --- ベース設定 --- */
+        :root {
+            --bg-color: #050505;
+            --card-bg: rgba(20, 20, 20, 0.8);
+            --main-color: #00f3ff; /* サイバーシアン */
+            --sub-color: #ff00ff;  /* ネオンピンク */
+            --text-color: #e0e0e0;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Share Tech Mono', monospace; /* 等幅フォント */
+            background-color: var(--bg-color);
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+            background-size: 20px 20px; /* グリッド背景 */
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* --- 走査線エフェクト (CRTモニター風) --- */
+        body::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        /* --- カードデザイン --- */
+        .card-container {
+            position: relative;
+            width: 100%;
+            max-width: 360px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--main-color);
+            box-shadow: 0 0 15px var(--main-color), inset 0 0 20px rgba(0, 243, 255, 0.2);
+            padding: 40px 20px;
+            text-align: center;
+            margin: 20px;
+            border-radius: 5px; /* 角を少しだけ丸める */
+            backdrop-filter: blur(5px);
+            z-index: 10;
+            opacity: 0; /* 最初は隠す */
+            transition: opacity 0.5s;
+        }
+
+        /* 装飾的な四隅の枠 */
+        .card-container::before {
+            content: '';
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            background: linear-gradient(45deg, var(--main-color), transparent, var(--sub-color));
+            z-index: -1;
+            filter: blur(10px);
+            opacity: 0.5;
+        }
+
+        /* --- プロフィール画像 --- */
+        .profile-wrapper {
+            position: relative;
+            width: 130px;
+            height: 130px;
+            margin: 0 auto 20px auto;
+        }
         
-        /* ローディング表示 */
-        #loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: bold; color: #666; }
+        .profile-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid var(--main-color);
+            filter: grayscale(80%) contrast(1.2); /* 彩度を落としてクールに */
+        }
+        
+        /* 画像周りの回転するリング */
+        .ring {
+            position: absolute;
+            top: -10px; left: -10px; right: -10px; bottom: -10px;
+            border: 1px dashed var(--main-color);
+            border-radius: 50%;
+            animation: rotate 10s linear infinite;
+        }
+
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* --- テキストスタイル --- */
+        h1 {
+            font-size: 26px;
+            color: var(--main-color);
+            text-shadow: 0 0 10px var(--main-color);
+            margin: 0 0 10px 0;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            min-height: 1.2em;
+        }
+
+        .job-title {
+            font-size: 16px;
+            color: var(--sub-color);
+            text-shadow: 0 0 5px var(--sub-color);
+            margin-bottom: 5px;
+            display: block;
+            min-height: 1.2em;
+        }
+
+        .company-name {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 20px;
+            display: block;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .bio {
+            font-size: 14px;
+            color: var(--text-color);
+            line-height: 1.8;
+            margin-bottom: 30px;
+            padding: 0 10px;
+            text-align: left;
+            min-height: 3em;
+        }
+
+        /* --- デジタル文字入力カーソル --- */
+        .typing-cursor::after {
+            content: '█';
+            animation: blink 0.8s infinite;
+            color: var(--main-color);
+            margin-left: 2px;
+        }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* --- リンクボタン --- */
+        .links-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .link-btn {
+            display: none; /* データロード後に表示 */
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.6);
+            color: var(--main-color);
+            text-decoration: none;
+            border: 1px solid var(--main-color);
+            transition: 0.3s;
+            font-weight: bold;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .link-btn:hover {
+            background: var(--main-color);
+            color: #000;
+            box-shadow: 0 0 20px var(--main-color);
+        }
+
+        /* ロード画面 */
+        #loading {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--main-color);
+            font-size: 18px;
+            text-shadow: 0 0 10px var(--main-color);
+            animation: blink 0.5s infinite alternate;
+        }
     </style>
 </head>
 <body>
 
-    <div id="loading">名刺データを読み込んでいます...</div>
+    <div id="loading">SYSTEM INITIALIZING...</div>
 
     <div class="card-container" id="mainCard">
-        <img src="https://via.placeholder.com/150?text=USER" alt="Profile" class="profile-img">
+        <div class="profile-wrapper">
+            <div class="ring"></div>
+            <img src="https://via.placeholder.com/150/000000/00f3ff?text=NO+IMG" alt="Profile" class="profile-img" id="profileImg">
+        </div>
+
         <h1 id="nameDisplay"></h1>
         <span id="jobDisplay" class="job-title"></span>
         <span id="companyDisplay" class="company-name"></span>
+        
         <p id="bioDisplay" class="bio"></p>
 
         <div class="links-container">
-            <a id="webLink" href="#" class="link-btn" target="_blank"><i class="fas fa-globe"></i> Website</a>
-            <a id="twitterLink" href="#" class="link-btn" target="_blank"><i class="fab fa-twitter"></i> X (Twitter)</a>
+            <a id="webLink" href="#" class="link-btn" target="_blank">
+                <i class="fas fa-globe"></i> ACCESS WEBSITE
+            </a>
+            <a id="twitterLink" href="#" class="link-btn" target="_blank">
+                <i class="fab fa-twitter"></i> CONNECT X
+            </a>
         </div>
     </div>
 
@@ -45,7 +226,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // ★★★ ここに Step 3 で取得したコードを貼り付けてください！ ★★★
+         // ★★★ ここに Step 3 で取得したコードを貼り付けてください！ ★★★
         const firebaseConfig = {
             apiKey: "AIzaSyB4j_6qxxuLNOtaQPmvijHL4QPk_6I3vC0",
             authDomain: "digital-meishi.firebaseapp.com",
@@ -59,12 +240,33 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // デジタル風タイピングエフェクト関数
+        async function typeWriter(elementId, text, speed = 50) {
+            const element = document.getElementById(elementId);
+            if (!text) {
+                element.innerHTML = ""; // データがない場合は空にする
+                return;
+            }
+            
+            element.innerHTML = ""; // リセット
+            element.classList.add("typing-cursor"); // カーソル表示
+
+            for (let i = 0; i < text.length; i++) {
+                element.textContent += text.charAt(i);
+                // ランダムな揺らぎを与えて人間味または機械的なラグを演出
+                await new Promise(resolve => setTimeout(resolve, speed + Math.random() * 30));
+            }
+
+            element.classList.remove("typing-cursor"); // 書き終わったらカーソルを消す
+        }
+
         async function loadCard() {
             const params = new URLSearchParams(window.location.search);
             const cardId = params.get('id');
 
             if (!cardId) {
-                document.getElementById('loading').innerText = "エラー: IDが指定されていません";
+                document.getElementById('loading').innerText = "ERROR: ID_NOT_FOUND";
+                document.getElementById('loading').style.color = "red";
                 return;
             }
 
@@ -74,11 +276,24 @@
 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    document.getElementById('nameDisplay').innerText = data.name || "No Name";
-                    document.getElementById('jobDisplay').innerText = data.job || "";
-                    document.getElementById('companyDisplay').innerText = data.company || "";
-                    document.getElementById('bioDisplay').innerText = data.bio || "";
 
+                    // 1. ローディングを消してカード枠を表示
+                    document.getElementById('loading').style.display = 'none';
+                    const mainCard = document.getElementById('mainCard');
+                    mainCard.style.opacity = 1;
+
+                    // 2. 情報を順番にタイプライター表示
+                    // await を使うことで「名前が終わったら肩書き...」と順番に表示します
+                    await typeWriter('nameDisplay', data.name || "UNKNOWN USER", 60);
+                    await typeWriter('jobDisplay', data.job || "", 40);
+                    
+                    // 会社名はパッと表示（演出の強弱をつけるため）
+                    document.getElementById('companyDisplay').innerText = data.company || "";
+                    
+                    // 自己紹介は少し早めに
+                    await typeWriter('bioDisplay', data.bio || "", 20);
+
+                    // 3. 最後にボタンを表示
                     if(data.website) {
                         const wBtn = document.getElementById('webLink');
                         wBtn.href = data.website;
@@ -90,15 +305,12 @@
                         tBtn.style.display = "flex";
                     }
 
-                    // 表示オン
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('mainCard').style.opacity = 1;
-
                 } else {
-                    document.getElementById('loading').innerText = "名刺データが見つかりません (ID: " + cardId + ")";
+                    document.getElementById('loading').innerText = "ERROR: DATA_CORRUPTED (ID INVALID)";
+                    document.getElementById('loading').style.color = "red";
                 }
             } catch (e) {
-                document.getElementById('loading').innerText = "読み込みエラー: " + e.message;
+                document.getElementById('loading').innerText = "SYSTEM FAILURE: " + e.message;
             }
         }
 

@@ -6,8 +6,40 @@
     <title>名刺データ作成ツール</title>
     <style>
         body { font-family: sans-serif; padding: 20px; max-width: 500px; margin: 0 auto; }
-        label { display: block; margin-top: 10px; font-weight: bold; }
-        input, textarea { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
+        label { display: block; margin-top: 15px; font-weight: bold; }
+        input[type="text"], input[type="url"], textarea { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
+        
+        /* 写真アップロード周りのデザイン */
+        .image-upload-container {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+        }
+        .preview-img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #ddd;
+            display: none; /* 最初は非表示 */
+            margin: 0 auto 10px auto;
+        }
+        input[type="file"] {
+            display: none; /* デフォルトのボタンは隠す */
+        }
+        .custom-file-upload {
+            display: inline-block;
+            padding: 8px 16px;
+            cursor: pointer;
+            background-color: #666;
+            color: white;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
         button { width: 100%; padding: 15px; background: #4A90E2; color: white; border: none; font-size: 16px; margin-top: 20px; cursor: pointer; border-radius: 5px;}
         #resultArea { margin-top: 20px; padding: 10px; background: #eee; word-break: break-all; display: none; }
     </style>
@@ -15,6 +47,16 @@
 <body>
     <h2>📇 デジタル名刺メーカー</h2>
     <p>情報を入力して「URL生成」を押してください。</p>
+
+    <label>プロフィール写真</label>
+    <div class="image-upload-container">
+        <img id="preview" class="preview-img" alt="プレビュー">
+        <label for="imageUpload" class="custom-file-upload">
+            📷 写真を選択する
+        </label>
+        <input type="file" id="imageUpload" accept="image/*" onchange="previewImage(this)">
+        <p style="font-size:12px; color:#666; margin-top:5px;">※写真はサーバーにアップされません。<br>（次回以降の機能で実装予定）<br>今回はテスト用として仮のURLを使います。</p>
+    </div>
 
     <label>お名前</label>
     <input type="text" id="name" placeholder="例：山田 太郎">
@@ -43,18 +85,37 @@
     </div>
 
     <script>
-        function generateURL() {
-            // ベースとなるURL（GitHub Pagesの公開URLに合わせて変更してください）
-            // 例: https://yourname.github.io/digital-card/
-            const baseURL = window.location.href.replace('maker.html', 'index.html');
+        // 写真プレビュー機能
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('preview').src = e.target.result;
+                    document.getElementById('preview').style.display = 'block';
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
 
+        function generateURL() {
+            // ベースURL
+            const baseURL = window.location.href.replace('maker.html', 'index.html');
             const params = new URLSearchParams();
+
+            // ※注意：本当はここで画像をサーバーにアップロードして、そのURLを取得する必要があります。
+            // 今回はまだサーバーがないため、画像URLは仮のもの（または手動入力）にする必要があります。
+            // ここでは一旦プレースホルダー（ダミー画像）のURLをセットします。
+            
+            // 入力データの取得
             if(document.getElementById('name').value) params.set('n', document.getElementById('name').value);
             if(document.getElementById('job').value) params.set('j', document.getElementById('job').value);
             if(document.getElementById('company').value) params.set('c', document.getElementById('company').value);
             if(document.getElementById('bio').value) params.set('b', document.getElementById('bio').value);
             if(document.getElementById('website').value) params.set('w', document.getElementById('website').value);
             if(document.getElementById('twitter').value) params.set('t', document.getElementById('twitter').value);
+
+            // 画像URLパラメータを追加（今回は固定ですが、本来はアップロードしたURLを入れる場所）
+            // params.set('img', 'ここに画像のURLが入ります');
 
             const finalURL = baseURL + "?" + params.toString();
             

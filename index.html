@@ -3,76 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Business Card</title>
+    <title>Digital Card</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* デザインは前回と同じものを流用（省略部分は前回と同様） */
+        /* 前回と同じスタイルですが、初期状態を「読み込み中」にします */
         :root { --bg-color: #f4f4f9; --card-bg: #ffffff; --text-main: #333; --text-sub: #777; --accent-color: #4A90E2; }
         body { margin: 0; padding: 0; font-family: 'Helvetica Neue', Arial, sans-serif; background-color: var(--bg-color); display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .card-container { width: 100%; max-width: 400px; background-color: var(--card-bg); border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 40px 20px; text-align: center; margin: 20px; }
-        .profile-img { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid var(--accent-color); margin-bottom: 20px; background-color: #eee;}
+        .card-container { width: 100%; max-width: 400px; background-color: var(--card-bg); border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 40px 20px; text-align: center; margin: 20px; opacity: 0; transition: 1s; } /* 初期は透明 */
+        .profile-img { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid var(--accent-color); margin-bottom: 20px; background: #eee;}
         h1 { font-size: 24px; color: var(--text-main); margin: 0 0 5px 0; }
         .job-title { font-size: 16px; color: var(--accent-color); font-weight: bold; margin-bottom: 5px; display: block; }
         .company-name { font-size: 14px; color: #555; margin-bottom: 15px; display: block; font-weight: bold;}
         .bio { font-size: 14px; color: var(--text-sub); line-height: 1.6; margin-bottom: 30px; padding: 0 10px; }
         .links-container { display: flex; flex-direction: column; gap: 15px; }
-        .link-btn { display: none; /* デフォルトは非表示、データがあれば表示 */ align-items: center; justify-content: center; padding: 15px; background-color: #f8f9fa; color: var(--text-main); text-decoration: none; border-radius: 12px; transition: 0.3s; border: 1px solid #eee; font-weight: 500; }
+        .link-btn { display: none; align-items: center; justify-content: center; padding: 15px; background-color: #f8f9fa; color: var(--text-main); text-decoration: none; border-radius: 12px; transition: 0.3s; border: 1px solid #eee; font-weight: 500; }
         .link-btn:hover { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
         .link-btn i { margin-right: 10px; font-size: 18px; }
+        
+        /* ローディング表示 */
+        #loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: bold; color: #666; }
     </style>
 </head>
 <body>
 
-    <div class="card-container">
-        <img src="https://via.placeholder.com/150?text=User" alt="Profile" class="profile-img">
+    <div id="loading">名刺データを読み込んでいます...</div>
 
-        <h1 id="nameDisplay">ゲスト ユーザー</h1>
+    <div class="card-container" id="mainCard">
+        <img src="https://via.placeholder.com/150?text=USER" alt="Profile" class="profile-img">
+        <h1 id="nameDisplay"></h1>
         <span id="jobDisplay" class="job-title"></span>
         <span id="companyDisplay" class="company-name"></span>
-        
-        <p id="bioDisplay" class="bio">データがありません。</p>
+        <p id="bioDisplay" class="bio"></p>
 
         <div class="links-container">
-            <a id="webLink" href="#" class="link-btn" target="_blank">
-                <i class="fas fa-globe"></i> Website
-            </a>
-            
-            <a id="twitterLink" href="#" class="link-btn" target="_blank">
-                <i class="fab fa-twitter"></i> X (Twitter)
-            </a>
+            <a id="webLink" href="#" class="link-btn" target="_blank"><i class="fas fa-globe"></i> Website</a>
+            <a id="twitterLink" href="#" class="link-btn" target="_blank"><i class="fab fa-twitter"></i> X (Twitter)</a>
         </div>
     </div>
 
-    <script>
-        // URLパラメータを取得して画面に反映する処理
-        window.onload = function() {
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // ★★★ ここに Step 3 で取得したコードを貼り付けてください！ ★★★
+        const firebaseConfig = {
+            apiKey: "AIzaSyB4j_6qxxuLNOtaQPmvijHL4QPk_6I3vC0",
+            authDomain: "digital-meishi.firebaseapp.com",
+            projectId: "digital-meishi",
+            storageBucket: "digital-meishi.firebasestorage.app",
+            messagingSenderId: "380152343881",
+            appId: "1:380152343881:web:fb3b6cdb50c4b12f7d7e98"
+        };
+        // ★★★ 貼り付けここまで ★★★
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function loadCard() {
             const params = new URLSearchParams(window.location.search);
+            const cardId = params.get('id');
 
-            // 1. 各要素を取得
-            const nameEl = document.getElementById('nameDisplay');
-            const jobEl = document.getElementById('jobDisplay');
-            const compEl = document.getElementById('companyDisplay');
-            const bioEl = document.getElementById('bioDisplay');
-            const webBtn = document.getElementById('webLink');
-            const twBtn = document.getElementById('twitterLink');
-
-            // 2. パラメータがあれば書き換え (n=Name, j=Job, c=Company, b=Bio, w=Website, t=Twitter)
-            if(params.has('n')) nameEl.innerText = params.get('n');
-            if(params.has('j')) jobEl.innerText = params.get('j');
-            if(params.has('c')) compEl.innerText = params.get('c');
-            if(params.has('b')) bioEl.innerText = params.get('b');
-
-            // 3. リンクの制御（URLがある時だけボタンを表示）
-            if(params.has('w')) {
-                webBtn.href = params.get('w');
-                webBtn.style.display = "flex";
+            if (!cardId) {
+                document.getElementById('loading').innerText = "エラー: IDが指定されていません";
+                return;
             }
 
-            if(params.has('t')) {
-                twBtn.href = "https://twitter.com/" + params.get('t').replace('@','');
-                twBtn.style.display = "flex";
+            try {
+                const docRef = doc(db, "cards", cardId);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('nameDisplay').innerText = data.name || "No Name";
+                    document.getElementById('jobDisplay').innerText = data.job || "";
+                    document.getElementById('companyDisplay').innerText = data.company || "";
+                    document.getElementById('bioDisplay').innerText = data.bio || "";
+
+                    if(data.website) {
+                        const wBtn = document.getElementById('webLink');
+                        wBtn.href = data.website;
+                        wBtn.style.display = "flex";
+                    }
+                    if(data.twitter) {
+                        const tBtn = document.getElementById('twitterLink');
+                        tBtn.href = "https://twitter.com/" + data.twitter.replace('@','');
+                        tBtn.style.display = "flex";
+                    }
+
+                    // 表示オン
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('mainCard').style.opacity = 1;
+
+                } else {
+                    document.getElementById('loading').innerText = "名刺データが見つかりません (ID: " + cardId + ")";
+                }
+            } catch (e) {
+                document.getElementById('loading').innerText = "読み込みエラー: " + e.message;
             }
         }
+
+        loadCard();
     </script>
 </body>
 </html>

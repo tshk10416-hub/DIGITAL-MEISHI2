@@ -12,6 +12,10 @@
         label { display: block; margin-top: 15px; font-weight: bold; font-size: 14px; color: #555; }
         input, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
         
+        /* SNS入力欄のデザイン */
+        .sns-group { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 20px; border: 1px solid #eee; }
+        .sns-label { margin-top: 10px; font-size: 13px; color: #666; }
+        
         button { width: 100%; padding: 15px; background: #4A90E2; color: white; border: none; font-size: 16px; margin-top: 25px; cursor: pointer; border-radius: 8px; font-weight: bold; transition: 0.2s;}
         button:hover { background: #357ABD; }
         button.load-btn { background: #666; margin-top: 5px; font-size: 14px; padding: 10px; }
@@ -33,23 +37,40 @@
         
         <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
 
+        <label>会社名 (一番上に表示)</label>
+        <input type="text" id="company" placeholder="例: 株式会社〇〇">
+
         <label>お名前</label>
         <input type="text" id="name" placeholder="例: 山田 太郎">
         
         <label>肩書き</label>
         <input type="text" id="job" placeholder="例: 代表取締役">
 
-        <label>会社名</label>
-        <input type="text" id="company" placeholder="例: 株式会社〇〇">
-
         <label>自己紹介</label>
         <textarea id="bio" rows="3"></textarea>
 
         <label>Webサイト URL</label>
-        <input type="url" id="website">
+        <input type="url" id="website" placeholder="https://...">
         
-        <label>X (Twitter) ID</label>
-        <input type="text" id="twitter" placeholder="@なし">
+        <div class="sns-group">
+            <h3 style="margin:0 0 10px 0; font-size:16px;">📲 SNS設定</h3>
+            <p style="font-size:12px; color:#888;">IDを入力するとアイコンが表示されます</p>
+
+            <label class="sns-label">X (Twitter) ID</label>
+            <input type="text" id="twitter" placeholder="@なしで入力 (例: elonmusk)">
+
+            <label class="sns-label">Instagram ID</label>
+            <input type="text" id="instagram" placeholder="例: zuck">
+
+            <label class="sns-label">GitHub ID</label>
+            <input type="text" id="github" placeholder="例: octocat">
+
+            <label class="sns-label">YouTube URL</label>
+            <input type="text" id="youtube" placeholder="例: https://youtube.com/@channel">
+
+            <label class="sns-label">LINE 友だち追加URL</label>
+            <input type="text" id="line" placeholder="例: https://line.me/ti/p/xxxxxx">
+        </div>
 
         <button onclick="saveData()">💾 データを保存・更新する</button>
         <div id="statusMessage" class="status"></div>
@@ -59,7 +80,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-          // ★★★ ここに Step 3 で取得したコードを貼り付けてください！ ★★★
+        // ★★★ Firebase Config (ご自身のものを貼り付けてください) ★★★
         const firebaseConfig = {
             apiKey: "AIzaSyB4j_6qxxuLNOtaQPmvijHL4QPk_6I3vC0",
             authDomain: "digital-meishi.firebaseapp.com",
@@ -68,8 +89,7 @@
             messagingSenderId: "380152343881",
             appId: "1:380152343881:web:fb3b6cdb50c4b12f7d7e98"
         };
-
-        // ★★★ 貼り付けここまで ★★★
+        // ★★★ ここまで ★★★
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -81,7 +101,7 @@
 
             if(!cardId) { alert("IDを入力してください"); return; }
 
-            statusEl.className = 'status'; // リセット
+            statusEl.className = 'status';
             statusEl.innerText = "保存中...";
             statusEl.style.display = 'block';
 
@@ -92,10 +112,15 @@
                     company: document.getElementById('company').value,
                     bio: document.getElementById('bio').value,
                     website: document.getElementById('website').value,
-                    twitter: document.getElementById('twitter').value
+                    // SNS情報
+                    twitter: document.getElementById('twitter').value,
+                    instagram: document.getElementById('instagram').value,
+                    github: document.getElementById('github').value,
+                    youtube: document.getElementById('youtube').value,
+                    line: document.getElementById('line').value
                 });
 
-                statusEl.innerText = "✅ 保存しました！Web名刺に即反映されます。";
+                statusEl.innerText = "✅ 保存しました！Web名刺に反映されました。";
                 statusEl.classList.add('success');
                 
             } catch (e) {
@@ -120,7 +145,14 @@
                 document.getElementById('company').value = data.company || "";
                 document.getElementById('bio').value = data.bio || "";
                 document.getElementById('website').value = data.website || "";
+                
+                // SNS情報の読み込み
                 document.getElementById('twitter').value = data.twitter || "";
+                document.getElementById('instagram').value = data.instagram || "";
+                document.getElementById('github').value = data.github || "";
+                document.getElementById('youtube').value = data.youtube || "";
+                document.getElementById('line').value = data.line || "";
+
                 alert("データを読み込みました");
             } else {
                 alert("まだデータがありません。新しく保存してください。");

@@ -3,70 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Business Card</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>Digital Identity</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* --- スマートで落ち着いた配色 --- */
+        /* --- 明るく、かつハイテクな配色 --- */
         :root {
-            --bg-color: #1a1a1a;       /* 背景：濃いグレー */
-            --card-bg: #252525;        /* カード：少し明るいグレー */
-            --text-main: #ffffff;      /* 白 */
-            --text-sub: #b0b0b0;       /* 薄いグレー */
-            --accent-color: #3b82f6;   /* 知的なブルー */
+            --bg-color: #f0f2f5;       /* 明るいグレー */
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --text-main: #2c3e50;      /* 濃いネイビーグレー（読みやすい） */
+            --text-sub: #7f8c8d;
+            --accent-color: #00d2ff;   /* サイバーシアン（鮮やかな水色） */
+            --accent-sub: #3a7bd5;     /* 濃いブルー */
         }
 
         body {
             margin: 0;
             padding: 0;
-            font-family: 'Roboto Mono', monospace; /* 等幅フォントでデジタル感を演出 */
+            font-family: 'Oxanium', sans-serif; /* SF感のあるフォント */
             background-color: var(--bg-color);
             color: var(--text-main);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            /* 背景に薄いグリッドを描画 */
+            background-image: 
+                linear-gradient(rgba(58, 123, 213, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(58, 123, 213, 0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
         }
 
-        /* --- カードデザイン (シンプルで上質に) --- */
+        /* --- カードデザイン (ガラス + テック装飾) --- */
         .card-container {
+            position: relative;
             width: 90%;
             max-width: 380px;
             background-color: var(--card-bg);
-            border-radius: 16px;
-            /* 派手な光ではなく、上品な影をつける */
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            padding: 40px 30px;
+            border-radius: 8px; /* 角丸は少し控えめに */
+            box-shadow: 
+                0 15px 35px rgba(0, 0, 0, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+            padding: 50px 30px;
             text-align: center;
-            opacity: 0; /* 最初は隠す */
-            transition: opacity 0.8s ease;
-            border: 1px solid #333;
+            opacity: 0; 
+            transition: opacity 0.5s ease;
+            backdrop-filter: blur(10px); /* すりガラス効果 */
+            border: 1px solid #d1d9e6;
+            overflow: hidden;
         }
 
+        /* --- 装飾：四隅のテックマーク --- */
+        .corner-deco {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--accent-color);
+            transition: 0.3s;
+        }
+        .top-left { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+        .top-right { top: 10px; right: 10px; border-left: none; border-bottom: none; }
+        .bottom-left { bottom: 10px; left: 10px; border-right: none; border-top: none; }
+        .bottom-right { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+
         /* --- プロフィール画像 --- */
-        .profile-img {
+        .profile-wrapper {
+            position: relative;
             width: 120px;
             height: 120px;
+            margin: 0 auto 25px auto;
+        }
+
+        .profile-img {
+            width: 100%;
+            height: 100%;
             border-radius: 50%;
             object-fit: cover;
-            border: 3px solid var(--accent-color);
-            margin-bottom: 25px;
-            background-color: #333;
+            border: 2px solid white;
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+            z-index: 2;
+            position: relative;
         }
+
+        /* 画像の周りを回るリング */
+        .spin-ring {
+            position: absolute;
+            top: -10px; left: -10px; right: -10px; bottom: -10px;
+            border-radius: 50%;
+            border: 1px dashed var(--accent-sub);
+            animation: spin 10s linear infinite;
+            opacity: 0.5;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
 
         /* --- テキスト情報 --- */
         h1 {
-            font-size: 22px;
-            margin: 0 0 8px 0;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            min-height: 1.5em; /* 高さを確保してガタツキ防止 */
+            font-size: 24px;
+            margin: 0 0 5px 0;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: var(--text-main);
+            text-transform: uppercase;
+            min-height: 1.2em;
         }
 
         .job-title {
-            font-size: 14px;
-            color: var(--accent-color);
-            font-weight: 500;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 15px;
+            color: var(--accent-sub);
+            font-weight: 600;
             margin-bottom: 5px;
             display: block;
             min-height: 1.5em;
@@ -77,33 +122,24 @@
             color: var(--text-sub);
             margin-bottom: 25px;
             display: block;
+            font-weight: 600;
             min-height: 1.5em;
         }
 
         .bio {
-            font-size: 13px;
-            color: #d1d1d1;
-            line-height: 1.8;
+            font-size: 14px;
+            color: #555;
+            line-height: 1.7;
             margin-bottom: 35px;
             text-align: left;
+            padding: 15px;
+            background: rgba(255,255,255,0.6);
+            border-left: 3px solid var(--accent-color);
             min-height: 4em;
-            padding: 0 5px;
-            border-left: 2px solid #444; /* 左に控えめなライン */
-            padding-left: 15px;
+            font-family: sans-serif; /* 本文は読みやすさ優先 */
         }
 
-        /* --- タイプライター演出のカーソル --- */
-        .typing-cursor::after {
-            content: '|';
-            animation: blink 1s infinite;
-            color: var(--accent-color);
-            margin-left: 2px;
-            font-weight: lighter;
-        }
-
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-
-        /* --- リンクボタン (フラットでモダンに) --- */
+        /* --- リンクボタン (スタイリッシュに) --- */
         .links-container {
             display: flex;
             flex-direction: column;
@@ -111,61 +147,88 @@
         }
 
         .link-btn {
-            display: none; /* データロード後に表示 */
+            display: none;
             align-items: center;
             justify-content: center;
             padding: 14px;
-            background-color: #333;
+            background: white;
             color: var(--text-main);
             text-decoration: none;
-            border-radius: 8px;
-            transition: all 0.2s ease;
+            border-radius: 4px;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             font-size: 14px;
-            border: 1px solid #444;
+            font-weight: 700;
+            border: 1px solid #d1d9e6;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            position: relative;
+            overflow: hidden;
+            font-family: 'Oxanium', sans-serif;
+        }
+
+        /* ホバー時のアニメーション（青い光が走る） */
+        .link-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 210, 255, 0.4), transparent);
+            transition: 0.5s;
         }
 
         .link-btn:hover {
-            background-color: var(--accent-color);
-            color: white;
             border-color: var(--accent-color);
+            color: var(--accent-sub);
             transform: translateY(-2px);
+        }
+        
+        .link-btn:hover::before {
+            left: 100%;
         }
 
         .link-btn i {
             margin-right: 10px;
-            font-size: 16px;
+            color: var(--accent-color);
         }
 
-        /* ロード画面 */
+        /* --- ローディング表示 --- */
         #loading {
             position: fixed;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            color: var(--text-sub);
+            color: var(--accent-sub);
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 2px;
             font-size: 14px;
-            font-weight: 500;
         }
     </style>
 </head>
 <body>
 
-    <div id="loading">Loading data...</div>
+    <div id="loading">CONNECTING TO DATABASE...</div>
 
     <div class="card-container" id="mainCard">
-        <img src="https://via.placeholder.com/150/333333/ffffff?text=USER" alt="Profile" class="profile-img" id="profileImg">
+        <div class="corner-deco top-left"></div>
+        <div class="corner-deco top-right"></div>
+        <div class="corner-deco bottom-left"></div>
+        <div class="corner-deco bottom-right"></div>
 
-        <h1 id="nameDisplay"></h1>
-        <span id="jobDisplay" class="job-title"></span>
-        <span id="companyDisplay" class="company-name"></span>
+        <div class="profile-wrapper">
+            <div class="spin-ring"></div>
+            <img src="https://via.placeholder.com/150?text=USER" alt="Profile" class="profile-img" id="profileImg">
+        </div>
+
+        <h1 id="nameDisplay" data-value=""></h1>
+        <span id="jobDisplay" class="job-title" data-value=""></span>
+        <span id="companyDisplay" class="company-name" data-value=""></span>
         
-        <p id="bioDisplay" class="bio"></p>
+        <p id="bioDisplay" class="bio" data-value=""></p>
 
         <div class="links-container">
             <a id="webLink" href="#" class="link-btn" target="_blank">
-                <i class="fas fa-globe"></i> Website
+                <i class="fas fa-globe"></i> OFFICIAL WEBSITE
             </a>
             <a id="twitterLink" href="#" class="link-btn" target="_blank">
-                <i class="fab fa-twitter"></i> X (Twitter)
+                <i class="fab fa-twitter"></i> X / TWITTER
             </a>
         </div>
     </div>
@@ -188,24 +251,48 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // タイプライター演出（少し滑らかに）
-        async function typeWriter(elementId, text, speed = 30) {
-            const element = document.getElementById(elementId);
-            if (!text) {
-                element.innerHTML = ""; 
-                return;
-            }
-            
-            element.innerHTML = ""; 
-            element.classList.add("typing-cursor");
+        // ★ 日本のアニメ風「デコード（解読）」エフェクト
+        // ランダムな文字がパラパラ変わりながら、正しい文字に確定していく演出
+        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&@";
 
-            for (let i = 0; i < text.length; i++) {
-                element.textContent += text.charAt(i);
-                // ランダム要素を減らして、スマートで一定のリズムに
-                await new Promise(resolve => setTimeout(resolve, speed));
-            }
+        function scrambleText(elementId, finalText) {
+            return new Promise((resolve) => {
+                const element = document.getElementById(elementId);
+                let iterations = 0;
+                
+                if(!finalText) {
+                    element.innerHTML = "";
+                    resolve();
+                    return;
+                }
 
-            element.classList.remove("typing-cursor");
+                // 一旦ランダム文字で埋める演出を入れるか、
+                // 左から徐々に確定させる方式にする
+                const interval = setInterval(() => {
+                    element.innerText = finalText
+                        .split("")
+                        .map((letter, index) => {
+                            // 既に確定した文字はそのまま表示
+                            if(index < iterations) {
+                                return finalText[index];
+                            }
+                            // 空白はそのまま
+                            if(letter === " " || letter === "　") return letter;
+                            
+                            // まだの部分はランダムな文字を表示（デコード中感）
+                            return letters[Math.floor(Math.random() * 26)];
+                        })
+                        .join("");
+                    
+                    // 終了条件
+                    if(iterations >= finalText.length) { 
+                        clearInterval(interval);
+                        resolve(); // アニメーション完了を通知
+                    }
+                    
+                    iterations += 1 / 2; // スピード調整（数字が大きいほど早い）
+                }, 30); // 更新頻度
+            });
         }
 
         async function loadCard() {
@@ -213,7 +300,8 @@
             const cardId = params.get('id');
 
             if (!cardId) {
-                document.getElementById('loading').innerText = "IDが指定されていません";
+                document.getElementById('loading').innerText = "ERROR: ID REQUIRED";
+                document.getElementById('loading').style.color = "red";
                 return;
             }
 
@@ -224,21 +312,25 @@
                 if (docSnap.exists()) {
                     const data = docSnap.data();
 
-                    // 1. ロード表示を消してカードをふわっと表示
+                    // 1. ローディングを消してカードを表示
                     document.getElementById('loading').style.display = 'none';
                     const mainCard = document.getElementById('mainCard');
                     mainCard.style.opacity = 1;
 
-                    // 2. テキストアニメーション開始
-                    // 名前は少しゆっくり堂々と
-                    await typeWriter('nameDisplay', data.name || "No Name", 50);
+                    // 2. 順番にデコード演出を実行
+                    // 名前 → 肩書き... と順番に実行して「システム起動」感を出す
+                    await scrambleText('nameDisplay', data.name || "NO NAME");
+                    await scrambleText('jobDisplay', data.job || "");
                     
-                    // 肩書きと会社名は少し早めに
-                    await typeWriter('jobDisplay', data.job || "", 30);
+                    // 会社名は少し早く
                     document.getElementById('companyDisplay').innerText = data.company || "";
                     
-                    // 自己紹介はスピーディーに
-                    await typeWriter('bioDisplay', data.bio || "", 15);
+                    // 自己紹介は長文なので、普通にタイプライターっぽく出すか、一気に表示
+                    // 今回は可読性のため普通に表示しつつフェードイン（CSSアニメ）に任せる形でも良いが
+                    // ここでは簡易的なタイプライターを使用
+                    const bioText = data.bio || "";
+                    const bioEl = document.getElementById('bioDisplay');
+                    bioEl.innerText = bioText; // 長文のスクランブルは読みづらいため、パッと表示
 
                     // 3. ボタン表示
                     if(data.website) {
@@ -253,10 +345,10 @@
                     }
 
                 } else {
-                    document.getElementById('loading').innerText = "データが見つかりません";
+                    document.getElementById('loading').innerText = "DATA NOT FOUND";
                 }
             } catch (e) {
-                document.getElementById('loading').innerText = "エラー: " + e.message;
+                document.getElementById('loading').innerText = "SYSTEM ERROR";
             }
         }
 

@@ -96,11 +96,9 @@
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
         /* --- テキスト情報 --- */
-        
-        /* 会社名 (大きく、一番上に) */
         .company-name {
-            font-size: 22px; /* 名前と同じくらいの大きさ */
-            color: var(--accent-sub); /* 青色で知的さを強調 */
+            font-size: 22px;
+            color: var(--accent-sub);
             margin-bottom: 5px;
             display: block;
             font-weight: 800;
@@ -109,7 +107,6 @@
             min-height: 1.2em;
         }
 
-        /* 名前 */
         h1 {
             font-size: 24px;
             margin: 0 0 10px 0;
@@ -119,7 +116,6 @@
             min-height: 1.2em;
         }
 
-        /* 肩書き */
         .job-title {
             font-family: 'Share Tech Mono', monospace;
             font-size: 14px;
@@ -152,7 +148,7 @@
         }
 
         .link-btn {
-            display: none;
+            display: none; /* デフォルト非表示 */
             align-items: center;
             justify-content: center;
             padding: 14px;
@@ -179,6 +175,8 @@
         .link-btn i {
             margin-right: 10px;
             color: var(--accent-color);
+            width: 20px;
+            text-align: center;
         }
 
         #loading {
@@ -208,19 +206,28 @@
         </div>
 
         <span id="companyDisplay" class="company-name" data-value=""></span>
-
         <h1 id="nameDisplay" data-value=""></h1>
-
         <span id="jobDisplay" class="job-title" data-value=""></span>
-        
         <p id="bioDisplay" class="bio" data-value=""></p>
 
         <div class="links-container">
             <a id="webLink" href="#" class="link-btn" target="_blank">
-                <i class="fas fa-globe"></i> OFFICIAL WEBSITE
+                <i class="fas fa-globe"></i> Website
             </a>
             <a id="twitterLink" href="#" class="link-btn" target="_blank">
-                <i class="fab fa-twitter"></i> X / TWITTER
+                <i class="fab fa-twitter"></i> X (Twitter)
+            </a>
+            <a id="instaLink" href="#" class="link-btn" target="_blank">
+                <i class="fab fa-instagram"></i> Instagram
+            </a>
+            <a id="githubLink" href="#" class="link-btn" target="_blank">
+                <i class="fab fa-github"></i> GitHub
+            </a>
+            <a id="youtubeLink" href="#" class="link-btn" target="_blank">
+                <i class="fab fa-youtube"></i> YouTube
+            </a>
+            <a id="lineLink" href="#" class="link-btn" target="_blank">
+                <i class="fab fa-line"></i> LINE Add Friend
             </a>
         </div>
     </div>
@@ -229,7 +236,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // ★★★ Firebase Config (ご自身のものを使ってください) ★★★
+        // ★★★ Firebase Config (ご自身のものを使用) ★★★
         const firebaseConfig = {
             apiKey: "AIzaSyB4j_6qxxuLNOtaQPmvijHL4QPk_6I3vC0",
             authDomain: "digital-meishi.firebaseapp.com",
@@ -245,33 +252,18 @@
 
         // デコード演出
         const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
         function scrambleText(elementId, finalText) {
             return new Promise((resolve) => {
                 const element = document.getElementById(elementId);
                 let iterations = 0;
-                
-                if(!finalText) {
-                    element.innerHTML = "";
-                    resolve();
-                    return;
-                }
-
+                if(!finalText) { element.innerHTML = ""; resolve(); return; }
                 const interval = setInterval(() => {
-                    element.innerText = finalText
-                        .split("")
-                        .map((letter, index) => {
-                            if(index < iterations) return finalText[index];
-                            if(letter === " " || letter === "　") return letter;
-                            return letters[Math.floor(Math.random() * letters.length)];
-                        })
-                        .join("");
-                    
-                    if(iterations >= finalText.length) { 
-                        clearInterval(interval);
-                        resolve();
-                    }
-                    
+                    element.innerText = finalText.split("").map((letter, index) => {
+                        if(index < iterations) return finalText[index];
+                        if(letter === " " || letter === "　") return letter;
+                        return letters[Math.floor(Math.random() * letters.length)];
+                    }).join("");
+                    if(iterations >= finalText.length) { clearInterval(interval); resolve(); }
                     iterations += 1 / 2;
                 }, 30);
             });
@@ -298,22 +290,54 @@
                     const mainCard = document.getElementById('mainCard');
                     mainCard.style.opacity = 1;
 
-                    // 演出順序：会社名(大) → 名前(大) → 肩書き(小)
+                    // 基本情報の表示
                     await scrambleText('companyDisplay', data.company || "CORPORATION");
                     await scrambleText('nameDisplay', data.name || "NO NAME");
                     await scrambleText('jobDisplay', data.job || "");
-                    
                     document.getElementById('bioDisplay').innerText = data.bio || "";
 
+                    // --- リンク表示ロジック ---
+                    
+                    // 1. Website
                     if(data.website) {
-                        const wBtn = document.getElementById('webLink');
-                        wBtn.href = data.website;
-                        wBtn.style.display = "flex";
+                        const el = document.getElementById('webLink');
+                        el.href = data.website;
+                        el.style.display = "flex";
                     }
+
+                    // 2. X (Twitter) - IDのみでOK
                     if(data.twitter) {
-                        const tBtn = document.getElementById('twitterLink');
-                        tBtn.href = "https://twitter.com/" + data.twitter.replace('@','');
-                        tBtn.style.display = "flex";
+                        const el = document.getElementById('twitterLink');
+                        el.href = "https://twitter.com/" + data.twitter.replace('@','');
+                        el.style.display = "flex";
+                    }
+
+                    // 3. Instagram - IDのみでOK
+                    if(data.instagram) {
+                        const el = document.getElementById('instaLink');
+                        el.href = "https://instagram.com/" + data.instagram.replace('@','');
+                        el.style.display = "flex";
+                    }
+
+                    // 4. GitHub - IDのみでOK
+                    if(data.github) {
+                        const el = document.getElementById('githubLink');
+                        el.href = "https://github.com/" + data.github;
+                        el.style.display = "flex";
+                    }
+
+                    // 5. YouTube - URL全体を想定
+                    if(data.youtube) {
+                        const el = document.getElementById('youtubeLink');
+                        el.href = data.youtube;
+                        el.style.display = "flex";
+                    }
+
+                    // 6. LINE - URL全体を想定
+                    if(data.line) {
+                        const el = document.getElementById('lineLink');
+                        el.href = data.line;
+                        el.style.display = "flex";
                     }
 
                 } else {

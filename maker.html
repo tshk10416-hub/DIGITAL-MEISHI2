@@ -136,6 +136,23 @@
         </div>
 
         <div class="form-group">
+            <label>肩書き (Job Title)</label>
+            <input type="text" id="job" placeholder="例: 代表取締役 / エンジニア">
+        </div>
+
+        <div class="form-group">
+            <label>📧 メールアドレス (非公開・登録用)</label>
+            <input type="email" id="email" placeholder="例: contact@example.com">
+        </div>
+
+        <div class="form-group">
+            <label>📞 電話番号 (非公開・登録用)</label>
+            <input type="tel" id="phone" placeholder="例: 090-1234-5678">
+        </div>
+        <div class="form-group">
+            <label>自己紹介 (Bio)</label>
+
+        <div class="form-group">
             <label>自己紹介 (Bio)</label>
             <textarea id="bio" rows="3" placeholder="短い自己紹介文..."></textarea>
         </div>
@@ -228,6 +245,8 @@
                     name: document.getElementById('name').value,
                     job: document.getElementById('job').value,
                     company: document.getElementById('company').value,
+                    email: document.getElementById('email').value,
+                    phone: document.getElementById('phone').value,
                     bio: document.getElementById('bio').value,
                     website: document.getElementById('website').value,
                     // SNS情報
@@ -261,6 +280,8 @@
                 document.getElementById('name').value = data.name || "";
                 document.getElementById('job').value = data.job || "";
                 document.getElementById('company').value = data.company || "";
+                document.getElementById('email').value = data.email || "";
+                document.getElementById('phone').value = data.phone || "";
                 document.getElementById('bio').value = data.bio || "";
                 document.getElementById('website').value = data.website || "";
                 

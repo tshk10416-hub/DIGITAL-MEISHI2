@@ -300,7 +300,6 @@
             const params = new URLSearchParams(window.location.search);
             const cardId = params.get('id');
 
-            // IDがない場合のエラー表示
             if (!cardId) {
                 document.getElementById('loading').innerText = "ERROR: ID REQUIRED";
                 document.getElementById('loading').style.color = "red";
@@ -308,35 +307,36 @@
             }
 
             try {
-                // データベースから情報を取得
                 const docRef = doc(db, "cards", cardId);
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
 
-                    // 読み込み完了：画面を表示
                     document.getElementById('loading').style.display = 'none';
                     const mainCard = document.getElementById('mainCard');
                     mainCard.style.opacity = 1;
 
-                    // テキストの演出（デコード効果）
+                    // 基本情報の表示
                     await scrambleText('companyDisplay', data.company || "CORPORATION");
                     await scrambleText('nameDisplay', data.name || "NO NAME");
                     await scrambleText('jobDisplay', data.job || "");
-                    
-                    // 自己紹介文の表示
                     document.getElementById('bioDisplay').innerText = data.bio || "";
 
+                    // ---------------------------------------------------------
+                    // ★★★ 追加：プロフィール画像を表示する処理 ★★★
+                    // ---------------------------------------------------------
+                    if(data.photoUrl) {
+                        document.getElementById('profileImg').src = data.photoUrl;
+                    } else {
+                        // 画像が設定されていない場合はデフォルト画像
+                        document.getElementById('profileImg').src = "https://via.placeholder.com/150?text=USER";
+                    }
+                    // ---------------------------------------------------------
 
-                    // ---------------------------------------------------------
-                    // ★★★ ここが追加・修正した部分（SAVE CONTACT機能） ★★★
-                    // ---------------------------------------------------------
+                    // 電話帳に追加 (SAVE CONTACT) 機能
                     const saveBtn = document.getElementById('saveContactBtn');
-                    
-                    // ボタンがクリックされたときの動作を設定
                     saveBtn.onclick = () => {
-                        // vCard形式（電話帳データ）のテキストを作成
                         const vcard = `BEGIN:VCARD
 VERSION:3.0
 FN:${data.name || ''}
@@ -347,57 +347,40 @@ EMAIL;TYPE=WORK:${data.email || ''}
 URL:${data.website || ''}
 NOTE:${data.bio || ''}
 END:VCARD`;
-
-                        // ファイルとしてダウンロードさせる処理
                         const blob = new Blob([vcard], { type: 'text/vcard;charset=utf-8' });
                         const url = URL.createObjectURL(blob);
                         const link = document.createElement('a');
                         link.href = url;
-                        link.download = (data.name || 'contact') + '.vcf'; // ファイル名設定
+                        link.download = (data.name || 'contact') + '.vcf';
                         link.click();
                     };
-                    // ---------------------------------------------------------
-                    // ★★★ 追加部分はここまで ★★★
-                    // ---------------------------------------------------------
-
 
                     // 各SNSリンクの表示判定
-                    // 1. Website
                     if(data.website) {
                         const el = document.getElementById('webLink');
                         el.href = data.website;
                         el.style.display = "flex";
                     }
-
-                    // 2. X (Twitter)
                     if(data.twitter) {
                         const el = document.getElementById('twitterLink');
                         el.href = "https://twitter.com/" + data.twitter.replace('@','');
                         el.style.display = "flex";
                     }
-
-                    // 3. Instagram
                     if(data.instagram) {
                         const el = document.getElementById('instaLink');
                         el.href = "https://instagram.com/" + data.instagram.replace('@','');
                         el.style.display = "flex";
                     }
-
-                    // 4. GitHub
                     if(data.github) {
                         const el = document.getElementById('githubLink');
                         el.href = "https://github.com/" + data.github;
                         el.style.display = "flex";
                     }
-
-                    // 5. YouTube
                     if(data.youtube) {
                         const el = document.getElementById('youtubeLink');
                         el.href = data.youtube;
                         el.style.display = "flex";
                     }
-
-                    // 6. LINE
                     if(data.line) {
                         const el = document.getElementById('lineLink');
                         el.href = data.line;
@@ -405,11 +388,9 @@ END:VCARD`;
                     }
 
                 } else {
-                    // データが見つからない場合
                     document.getElementById('loading').innerText = "DATA NOT FOUND";
                 }
             } catch (e) {
-                // システムエラーの場合
                 document.getElementById('loading').innerText = "SYSTEM ERROR: " + e.message;
             }
         }

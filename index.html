@@ -67,11 +67,16 @@
         .bottom-right { bottom: 15px; right: 15px; border-left: none; border-top: none; }
 
         /* --- プロフィール画像 --- */
-        .profile-wrapper {
-            position: relative;
-            width: 110px;
-            height: 110px;
+       .profile-wrapper { 
+            position: relative; 
+            width: 110px; 
+            height: 110px; 
             margin: 0 auto 30px auto;
+            /* ★ここから追加（中央揃えを強制する魔法のコード）★ */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* ★ここまで追加★ */
         }
 
         .profile-img {

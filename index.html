@@ -435,8 +435,7 @@
         const bootLines = [
             "INITIALIZING INTERFACE...",
             "CONNECTING TO DATABASE...",
-            "DECRYPTING IDENTITY DATA...",
-            "BIOMETRIC MATCH CONFIRMED"
+            "DECRYPTING IDENTITY DATA..."
         ];
         function runBootSequence() {
             const log = document.getElementById('bootLog');
@@ -446,7 +445,6 @@
                     if (i >= bootLines.length) { resolve(); return; }
                     const line = document.createElement('div');
                     line.innerText = bootLines[i];
-                    if (i === bootLines.length - 1) line.className = 'ok';
                     log.appendChild(line);
                     i++;
                     setTimeout(next, 380);
@@ -512,6 +510,12 @@
 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
+
+                    const okLine = document.createElement('div');
+                    okLine.className = 'ok';
+                    okLine.innerText = "BIOMETRIC MATCH CONFIRMED";
+                    document.getElementById('bootLog').appendChild(okLine);
+                    await new Promise(r => setTimeout(r, 350));
 
                     const loading = document.getElementById('loading');
                     loading.classList.add('hide');

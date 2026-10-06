@@ -88,10 +88,7 @@
             box-shadow: 0 5px 15px rgba(0, 210, 255, 0.2); 
             z-index: 2; 
             position: relative;
-            /* ★ここから修正（位置を右下に微調整）★ */
-            top: 2px;  /* 旧: -2px */
-            left: -1px; /* 旧: -2px */
-            /* ★ここまで修正★ */
+            box-sizing: border-box; /* 白い枠線を含めて円の中心に収める */
         }
 
         .spin-ring {

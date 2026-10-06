@@ -71,7 +71,7 @@
             position: relative; 
             width: 110px; 
             height: 110px; 
-            margin: 0 auto 30px auto;
+            margin: 15px auto 45px auto;
             /* ★ここから追加（中央揃えを強制する魔法のコード）★ */
             display: flex;
             justify-content: center;
@@ -216,19 +216,150 @@
             letter-spacing: 2px;
             font-size: 14px;
         }
+
+        /* =========================================================
+           JARVIS風 HUDエフェクト
+           ========================================================= */
+
+        /* --- 起動シーケンス（ローディング画面） --- */
+        #loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 22px;
+            transition: opacity 0.6s ease;
+        }
+        #loading.hide { opacity: 0; pointer-events: none; }
+        .boot-reactor { width: 130px; height: 130px; }
+        .boot-reactor .r1 { animation: spin 3s linear infinite; }
+        .boot-reactor .r2 { animation: spin 5s linear infinite reverse; }
+        .boot-reactor .r3 { animation: spin 1.6s linear infinite; }
+        .boot-reactor .core { animation: core-pulse 1.4s ease-in-out infinite; }
+        .boot-reactor g, .hud-ring g { transform-origin: 100px 100px; }
+        @keyframes core-pulse { 50% { opacity: 0.35; } }
+        .boot-log {
+            min-width: 260px;
+            min-height: 6.5em;
+            font-size: 12px;
+            line-height: 1.6;
+            text-align: left;
+            color: var(--accent-sub);
+        }
+        .boot-log div::before { content: "> "; color: var(--accent-color); }
+        .boot-log .ok { color: var(--accent-color); }
+
+        /* --- プロフィール周りの回転HUDリング --- */
+        .hud-ring {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 180px; height: 180px;
+            transform: translate(-50%, -50%) scale(0.6);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1;
+            transition: transform 0.9s cubic-bezier(.2,.9,.3,1.2), opacity 0.6s ease;
+        }
+        .hud-on .hud-ring { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        .hud-ring .g1 { animation: spin 20s linear infinite; }
+        .hud-ring .g2 { animation: spin 9s linear infinite reverse; }
+        .hud-ring .g3 { animation: spin 5s linear infinite; }
+        .hud-ring .g4 { animation: spin 14s linear infinite reverse; }
+
+        /* --- カード出現時のスキャンライン --- */
+        .scan-line {
+            position: absolute;
+            left: 0; right: 0; top: -10%;
+            height: 80px;
+            background: linear-gradient(to bottom, transparent, rgba(0, 210, 255, 0.18) 85%, rgba(0, 210, 255, 0.7));
+            pointer-events: none;
+            opacity: 0;
+            z-index: 5;
+        }
+        .hud-on .scan-line { animation: scan 1.4s ease-out 0.1s forwards; }
+        @keyframes scan {
+            0% { top: -80px; opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        /* --- カード出現・コーナーのロックオン --- */
+        .card-container { transform: scale(0.97); transition: opacity 0.5s ease, transform 0.6s ease; }
+        .card-container.hud-on { transform: scale(1); }
+        .hud-on .corner-deco { animation: corner-lock 0.7s ease-out; }
+        @keyframes corner-lock {
+            0% { width: 60px; height: 60px; opacity: 0; }
+            60% { opacity: 1; }
+            100% { width: 15px; height: 15px; opacity: 0.7; }
+        }
+
+        /* --- ステータス表示（カード上部の細い文字） --- */
+        .hud-status {
+            position: absolute;
+            top: 16px; left: 0; right: 0;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--accent-sub);
+            opacity: 0.55;
+        }
+        .hud-status .dot {
+            display: inline-block;
+            width: 6px; height: 6px;
+            margin-right: 6px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            box-shadow: 0 0 6px var(--accent-color);
+            animation: core-pulse 1.4s ease-in-out infinite;
+        }
+
+        /* --- ボタンのホログラム光沢 --- */
+        .link-btn::after {
+            content: "";
+            position: absolute;
+            top: 0; left: -60%;
+            width: 40%; height: 100%;
+            background: linear-gradient(100deg, transparent, rgba(0, 210, 255, 0.25), transparent);
+            transform: skewX(-20deg);
+            pointer-events: none;
+        }
+        .link-btn:hover::after { animation: shine 0.7s ease; }
+        .save-btn::after { background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.45), transparent); animation: shine 3s ease-in-out infinite; }
+        @keyframes shine { 0% { left: -60%; } 40%, 100% { left: 130%; } }
+
+        /* 動きを減らす設定の端末では演出を止める */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+            .hud-ring { opacity: 1; transform: translate(-50%, -50%); }
+        }
     </style>
 </head>
 <body>
 
-    <div id="loading">CONNECTING TO DATABASE...</div>
+    <div id="loading">
+        <svg class="boot-reactor" viewBox="0 0 200 200" aria-hidden="true">
+            <g class="r1"><circle cx="100" cy="100" r="90" fill="none" stroke="#00d2ff" stroke-width="2" stroke-dasharray="140 50 40 50" /></g>
+            <g class="r2"><circle cx="100" cy="100" r="74" fill="none" stroke="#3a7bd5" stroke-width="6" stroke-dasharray="2 6" opacity="0.6" /></g>
+            <g class="r3"><circle cx="100" cy="100" r="58" fill="none" stroke="#00d2ff" stroke-width="3" stroke-dasharray="60 304" /></g>
+            <circle class="core" cx="100" cy="100" r="22" fill="rgba(0,210,255,0.25)" stroke="#00d2ff" stroke-width="2" />
+        </svg>
+        <div class="boot-log" id="bootLog"></div>
+    </div>
 
     <div class="card-container" id="mainCard">
         <div class="corner-deco top-left"></div>
         <div class="corner-deco top-right"></div>
         <div class="corner-deco bottom-left"></div>
         <div class="corner-deco bottom-right"></div>
+        <div class="scan-line"></div>
+        <div class="hud-status"><span class="dot"></span>IDENTITY VERIFIED</div>
 
         <div class="profile-wrapper">
+            <svg class="hud-ring" viewBox="0 0 200 200" aria-hidden="true">
+                <g class="g1"><circle cx="100" cy="100" r="96" fill="none" stroke="#3a7bd5" stroke-width="3" stroke-dasharray="1 4" opacity="0.5" /></g>
+                <g class="g2"><circle cx="100" cy="100" r="88" fill="none" stroke="#00d2ff" stroke-width="2" stroke-dasharray="120 30 20 30 60 293" /></g>
+                <g class="g3"><circle cx="100" cy="100" r="81" fill="none" stroke="#00d2ff" stroke-width="4" stroke-dasharray="40 214" opacity="0.8" /></g>
+                <g class="g4"><circle cx="100" cy="100" r="75" fill="none" stroke="#3a7bd5" stroke-width="1" stroke-dasharray="200 271" opacity="0.6" /></g>
+            </svg>
             <div class="spin-ring"></div>
             <img src="https://via.placeholder.com/150?text=USER" alt="Profile" class="profile-img" id="profileImg">
         </div>
@@ -239,12 +370,8 @@
         <p id="bioDisplay" class="bio" data-value=""></p>
 
         <div class="links-container">
-            <div class="links-container">
             <a id="saveContactBtn" class="link-btn save-btn">
                 <i class="fas fa-address-book"></i> 電話帳に追加
-            </a>
-            <a id="webLink" href="#" class="link-btn" target="_blank">
-                <i class="fas fa-globe"></i> Website
             </a>
             <a id="webLink" href="#" class="link-btn" target="_blank">
                 <i class="fas fa-globe"></i> Website
@@ -304,27 +431,98 @@
             });
         }
 
-        // ★この関数をまるごとコピーして、元の loadCard 関数と置き換えてください★
+        // JARVIS風 起動ログ演出
+        const bootLines = [
+            "INITIALIZING INTERFACE...",
+            "CONNECTING TO DATABASE...",
+            "DECRYPTING IDENTITY DATA..."
+        ];
+        function runBootSequence() {
+            const log = document.getElementById('bootLog');
+            return new Promise((resolve) => {
+                let i = 0;
+                const next = () => {
+                    if (i >= bootLines.length) { resolve(); return; }
+                    const line = document.createElement('div');
+                    line.innerText = bootLines[i];
+                    log.appendChild(line);
+                    i++;
+                    setTimeout(next, 380);
+                };
+                next();
+            });
+        }
+        function showBootError(message) {
+            const log = document.getElementById('bootLog');
+            const line = document.createElement('div');
+            line.innerText = message;
+            line.style.color = "red";
+            log.appendChild(line);
+        }
+
+        // vCard用に特殊文字をエスケープ（改行・カンマ・セミコロンで項目が崩れないように）
+        function vcardEscape(value) {
+            return String(value || '')
+                .replace(/\\/g, '\\\\')
+                .replace(/\r?\n/g, '\\n')
+                .replace(/,/g, '\\,')
+                .replace(/;/g, '\\;');
+        }
+
+        // 電話帳登録用 vCard を作成
+        // N(氏名)を必ず入れることで、iPhone等で「会社名」が名前欄に表示される問題を防ぐ
+        function buildVCard(data) {
+            const fullName = (data.name || '').trim();
+            const parts = fullName.split(/[\s\u3000]+/).filter(Boolean);
+            // 「山田 太郎」のように スペース区切りなら 姓・名 に分ける
+            const familyName = parts.length > 1 ? parts[0] : fullName;
+            const givenName = parts.length > 1 ? parts.slice(1).join(' ') : '';
+
+            const lines = [
+                'BEGIN:VCARD',
+                'VERSION:3.0',
+                `N:${vcardEscape(familyName)};${vcardEscape(givenName)};;;`,
+                `FN:${vcardEscape(fullName)}`
+            ];
+            if (data.company) lines.push(`ORG:${vcardEscape(data.company)}`);
+            if (data.job) lines.push(`TITLE:${vcardEscape(data.job)}`);
+            if (data.phone) lines.push(`TEL;TYPE=CELL:${data.phone}`);
+            if (data.email) lines.push(`EMAIL;TYPE=WORK:${data.email}`);
+            if (data.website) lines.push(`URL:${data.website}`);
+            if (data.bio) lines.push(`NOTE:${vcardEscape(data.bio)}`);
+            lines.push('END:VCARD');
+            return lines.join('\r\n');
+        }
+
         async function loadCard() {
             const params = new URLSearchParams(window.location.search);
             const cardId = params.get('id');
 
             if (!cardId) {
-                document.getElementById('loading').innerText = "ERROR: ID REQUIRED";
-                document.getElementById('loading').style.color = "red";
+                showBootError("ERROR: ID REQUIRED");
                 return;
             }
 
             try {
                 const docRef = doc(db, "cards", cardId);
-                const docSnap = await getDoc(docRef);
+                // 起動演出とデータ取得を同時に進める
+                const [docSnap] = await Promise.all([getDoc(docRef), runBootSequence()]);
 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
 
-                    document.getElementById('loading').style.display = 'none';
+                    const okLine = document.createElement('div');
+                    okLine.className = 'ok';
+                    okLine.innerText = "BIOMETRIC MATCH CONFIRMED";
+                    document.getElementById('bootLog').appendChild(okLine);
+                    await new Promise(r => setTimeout(r, 350));
+
+                    const loading = document.getElementById('loading');
+                    loading.classList.add('hide');
+                    setTimeout(() => { loading.style.display = 'none'; }, 600);
                     const mainCard = document.getElementById('mainCard');
                     mainCard.style.opacity = 1;
+                    mainCard.classList.add('hud-on');
 
                     // 基本情報の表示
                     await scrambleText('companyDisplay', data.company || "CORPORATION");
@@ -346,16 +544,7 @@
                     // 電話帳に追加 (SAVE CONTACT) 機能
                     const saveBtn = document.getElementById('saveContactBtn');
                     saveBtn.onclick = () => {
-                        const vcard = `BEGIN:VCARD
-VERSION:3.0
-FN:${data.name || ''}
-ORG:${data.company || ''}
-TITLE:${data.job || ''}
-TEL;TYPE=CELL:${data.phone || ''}
-EMAIL;TYPE=WORK:${data.email || ''}
-URL:${data.website || ''}
-NOTE:${data.bio || ''}
-END:VCARD`;
+                        const vcard = buildVCard(data);
                         const blob = new Blob([vcard], { type: 'text/vcard;charset=utf-8' });
                         const url = URL.createObjectURL(blob);
                         const link = document.createElement('a');
@@ -397,10 +586,10 @@ END:VCARD`;
                     }
 
                 } else {
-                    document.getElementById('loading').innerText = "DATA NOT FOUND";
+                    showBootError("DATA NOT FOUND");
                 }
             } catch (e) {
-                document.getElementById('loading').innerText = "SYSTEM ERROR: " + e.message;
+                showBootError("SYSTEM ERROR: " + e.message);
             }
         }
 

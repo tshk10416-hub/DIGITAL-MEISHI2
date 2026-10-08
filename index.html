@@ -457,6 +457,23 @@
             log.appendChild(line);
         }
 
+        // リンクは http/https だけ許可（javascript: などで不正な動作をさせないため）
+        function safeUrl(value) {
+            try {
+                const url = new URL(String(value || '').trim());
+                return (url.protocol === 'https:' || url.protocol === 'http:') ? url.href : '';
+            } catch (e) {
+                return '';
+            }
+        }
+
+        // プロフィール画像は保存時に作る JPEG/PNG のデータか https の画像だけ表示する
+        function safeImageSrc(value) {
+            const s = String(value || '');
+            if (/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(s)) return s;
+            return safeUrl(s).startsWith('https:') ? s : '';
+        }
+
         // vCard用に特殊文字をエスケープ（改行・カンマ・セミコロンで項目が崩れないように）
         function vcardEscape(value) {
             return String(value || '')
@@ -530,8 +547,8 @@
                     // ---------------------------------------------------------
                     // ★★★ 追加：プロフィール画像を表示する処理 ★★★
                     // ---------------------------------------------------------
-                    if(data.photoUrl) {
-                        document.getElementById('profileImg').src = data.photoUrl;
+                    if(safeImageSrc(data.photoUrl)) {
+                        document.getElementById('profileImg').src = safeImageSrc(data.photoUrl);
                     } else {
                         // 画像が設定されていない場合はデフォルト画像
                         document.getElementById('profileImg').src = "https://via.placeholder.com/150?text=USER";
@@ -551,9 +568,9 @@
                     };
 
                     // 各SNSリンクの表示判定
-                    if(data.website) {
+                    if(safeUrl(data.website)) {
                         const el = document.getElementById('webLink');
-                        el.href = data.website;
+                        el.href = safeUrl(data.website);
                         el.style.display = "flex";
                     }
                     if(data.twitter) {
@@ -571,14 +588,14 @@
                         el.href = "https://github.com/" + data.github;
                         el.style.display = "flex";
                     }
-                    if(data.youtube) {
+                    if(safeUrl(data.youtube)) {
                         const el = document.getElementById('youtubeLink');
-                        el.href = data.youtube;
+                        el.href = safeUrl(data.youtube);
                         el.style.display = "flex";
                     }
-                    if(data.line) {
+                    if(safeUrl(data.line)) {
                         const el = document.getElementById('lineLink');
-                        el.href = data.line;
+                        el.href = safeUrl(data.line);
                         el.style.display = "flex";
                     }
 

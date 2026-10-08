@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 名刺を編集できるのは管理者のGoogleアカウントだけ（maker.html の ADMIN_EMAILS と同じ）
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in ['tshk.10416@gmail.com'];
+    }
+
+    function isValidCard() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['photoUrl', 'name', 'job', 'company', 'email', 'phone', 'bio',
+                               'website', 'twitter', 'instagram', 'github', 'youtube', 'line'])
+        && (!('photoUrl' in d) || (d.photoUrl is string && d.photoUrl.size() < 500000))
+        && (!('bio' in d) || (d.bio is string && d.bio.size() <= 2000));
+    }
+
+    match /cards/{cardId} {
+      // 名刺ページはIDを指定した1件だけ読める（一覧の取得は不可）
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if isAdmin() && cardId.matches('^[A-Za-z0-9_-]{1,40}$') && isValidCard();
+      allow delete: if isAdmin();
+    }
+
+    // それ以外は全て拒否
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -31,11 +31,24 @@
         .status { margin-top: 15px; padding: 10px; border-radius: 5px; text-align: center; font-weight: bold; display: none; }
         .success { background: #d4edda; color: #155724; display: block; }
         .error { background: #f8d7da; color: #721c24; display: block; }
+        .auth-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+        .auth-bar p { margin: 0; font-size: 14px; }
+        .auth-bar button { width: auto; margin-top: 0; padding: 10px 18px; font-size: 14px; }
+        button.logout-btn { background: #95a5a6; box-shadow: none; }
+        #editor[hidden] { display: none; }
     </style>
 </head>
 <body>
     <h2>🛠️ 名刺データ管理</h2>
-    
+
+    <!-- 編集は管理者のGoogleアカウントでログインした時だけ可能（Firestoreのルールでも同じ制限をかけている） -->
+    <div class="card auth-bar">
+        <p id="authStatus">ログイン状態を確認中...</p>
+        <button id="loginBtn" onclick="login()" hidden><i class="fab fa-google"></i> Googleでログイン</button>
+        <button id="logoutBtn" onclick="logout()" class="logout-btn" hidden>ログアウト</button>
+    </div>
+
+    <div id="editor" hidden>
     <div class="card">
         <div class="section-title"><i class="fas fa-id-card"></i> 編集するIDを選択</div>
         <label>カードID (英数字)</label>
@@ -60,8 +73,8 @@
         <div class="form-group"><label>会社名 (Company)</label><input type="text" id="company" placeholder="例: 株式会社〇〇"></div>
         <div class="form-group"><label>お名前 (Name)</label><input type="text" id="name" placeholder="例: 山田 太郎"></div>
         <div class="form-group"><label>肩書き (Job Title)</label><input type="text" id="job" placeholder="例: 代表取締役 / エンジニア"></div>
-        <div class="form-group"><label>📧 メールアドレス (非公開・登録用)</label><input type="email" id="email" placeholder="例: contact@example.com"></div>
-        <div class="form-group"><label>📞 電話番号 (非公開・登録用)</label><input type="tel" id="phone" placeholder="例: 090-1234-5678"></div>
+        <div class="form-group"><label>📧 メールアドレス (電話帳登録ボタンで相手に渡ります)</label><input type="email" id="email" placeholder="例: contact@example.com"></div>
+        <div class="form-group"><label>📞 電話番号 (電話帳登録ボタンで相手に渡ります)</label><input type="tel" id="phone" placeholder="例: 090-1234-5678"></div>
         <div class="form-group"><label>自己紹介 (Bio)</label><textarea id="bio" rows="3" placeholder="短い自己紹介文..."></textarea></div>
         <div class="form-group"><label><i class="fas fa-globe" style="margin-right:5px;"></i> Webサイト URL</label><input type="url" id="website" placeholder="https://your-portfolio.com"></div>
     </div>
@@ -79,11 +92,17 @@
         <button onclick="saveData()">💾 保存して更新する</button>
         <div id="statusMessage" class="status"></div>
     </div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        // 編集できるのはこのアカウントだけ（Firestoreのセキュリティルールにも同じアドレスを設定済み）
+        const ADMIN_EMAILS = ["tshk.10416@gmail.com"];
+        const CARD_ID_PATTERN = /^[A-Za-z0-9_-]{1,40}$/;
+
         const firebaseConfig = {
             apiKey: "AIzaSyB4j_6qxxuLNOtaQPmvijHL4QPk_6I3vC0",
             authDomain: "digital-meishi.firebaseapp.com",
@@ -95,6 +114,39 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        const isAdmin = (user) => !!user && user.emailVerified && ADMIN_EMAILS.includes(user.email);
+
+        onAuthStateChanged(auth, (user) => {
+            const statusEl = document.getElementById('authStatus');
+            document.getElementById('loginBtn').hidden = !!user;
+            document.getElementById('logoutBtn').hidden = !user;
+            document.getElementById('editor').hidden = !isAdmin(user);
+            if (!user) {
+                statusEl.innerText = "名刺を編集するにはログインしてください";
+            } else if (isAdmin(user)) {
+                statusEl.innerText = "✅ " + user.email + " でログイン中";
+            } else {
+                statusEl.innerText = "⚠️ " + user.email + " には編集権限がありません";
+            }
+        });
+
+        window.login = async function() {
+            const provider = new GoogleAuthProvider();
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (e) {
+                // ポップアップがブロックされる端末ではページ移動式のログインに切り替える
+                if (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment') {
+                    await signInWithRedirect(auth, provider);
+                } else if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') {
+                    alert("ログインに失敗しました: " + e.message);
+                }
+            }
+        }
+
+        window.logout = function() { signOut(auth); }
 
         let currentPhotoDataUrl = "";
 
@@ -140,8 +192,10 @@
             const cardId = document.getElementById('cardId').value;
             const statusEl = document.getElementById('statusMessage');
             if(!cardId) { alert("IDを入力してください"); return; }
-            
-            statusEl.innerText = "データを保存中..."; 
+            if(!CARD_ID_PATTERN.test(cardId)) { alert("IDは半角英数字・ハイフン・アンダーバーの40文字以内で入力してください"); return; }
+            if(!isAdmin(auth.currentUser)) { alert("編集権限のあるアカウントでログインしてください"); return; }
+
+            statusEl.innerText = "データを保存中...";
             statusEl.style.display = 'block'; 
             statusEl.className = 'status';
 
@@ -173,6 +227,7 @@
         window.loadData = async function() {
             const cardId = document.getElementById('cardId').value;
             if(!cardId) { alert("IDを入力してください"); return; }
+            if(!CARD_ID_PATTERN.test(cardId)) { alert("IDは半角英数字・ハイフン・アンダーバーの40文字以内で入力してください"); return; }
             const docRef = doc(db, "cards", cardId);
             const docSnap = await getDoc(docRef);
 

@@ -18,9 +18,9 @@ service cloud.firestore {
     }
 
     match /cards/{cardId} {
-      // 名刺ページはIDを指定した1件だけ読める（一覧の取得は不可）
+      // 名刺ページはIDを指定した1件だけ読める。一覧の取得は管理者（maker.html の名刺選択）だけ
       allow get: if true;
-      allow list: if false;
+      allow list: if isAdmin();
       allow create, update: if isAdmin() && cardId.matches('^[A-Za-z0-9_-]{1,40}$') && isValidCard();
       allow delete: if isAdmin();
     }

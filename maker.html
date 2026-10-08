@@ -13,7 +13,7 @@
         .section-title i { margin-right: 10px; color: #00d2ff; }
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; color: #555; display: flex; align-items: center; }
-        input[type="text"], input[type="url"], input[type="email"], input[type="tel"], textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; transition: 0.3s; background: #f9f9f9; }
+        input[type="text"], input[type="url"], input[type="email"], input[type="tel"], textarea, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; transition: 0.3s; background: #f9f9f9; }
         input:focus, textarea:focus { border-color: #00d2ff; background: #fff; outline: none; }
         
         /* 画像アップロード用のスタイル */
@@ -50,10 +50,13 @@
 
     <div id="editor" hidden>
     <div class="card">
-        <div class="section-title"><i class="fas fa-id-card"></i> 編集するIDを選択</div>
-        <label>カードID (英数字)</label>
-        <input type="text" id="cardId" placeholder="例: myself01">
-        <button onclick="loadData()" class="load-btn">🔄 データを読み込む</button>
+        <div class="section-title"><i class="fas fa-id-card"></i> 編集する名刺</div>
+        <!-- ログインすると名刺の一覧を読み込み、前回編集した名刺（なければ先頭）を自動で表示する -->
+        <select id="cardSelect" onchange="selectCard(this.value)"><option>読み込み中...</option></select>
+        <div id="newIdArea" class="form-group" style="margin-top:15px;" hidden>
+            <label>新しいカードID (英数字)</label>
+            <input type="text" id="cardId" placeholder="例: myself01">
+        </div>
     </div>
 
     <div class="card">
@@ -96,12 +99,16 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         // 編集できるのはこのアカウントだけ（Firestoreのセキュリティルールにも同じアドレスを設定済み）
         const ADMIN_EMAILS = ["tshk.10416@gmail.com"];
         const CARD_ID_PATTERN = /^[A-Za-z0-9_-]{1,40}$/;
+        const NEW_CARD = "__new__";
+        const LAST_CARD_KEY = "meishiMaker_lastCardId";
+        const NO_IMAGE = "https://via.placeholder.com/150?text=NO+IMG";
+        const FIELDS = ['name', 'job', 'company', 'email', 'phone', 'bio', 'website', 'twitter', 'instagram', 'github', 'youtube', 'line'];
 
         const firebaseConfig = {
             apiKey: "AIzaSyB4j_6qxxuLNOtaQPmvijHL4QPk_6I3vC0",
@@ -127,6 +134,7 @@
                 statusEl.innerText = "名刺を編集するにはログインしてください";
             } else if (isAdmin(user)) {
                 statusEl.innerText = "✅ " + user.email + " でログイン中";
+                loadCardList();
             } else {
                 statusEl.innerText = "⚠️ " + user.email + " には編集権限がありません";
             }
@@ -146,9 +154,53 @@
             }
         }
 
-        window.logout = function() { signOut(auth); }
+        window.logout = function() { signOut(auth); fillForm({}); }
 
         let currentPhotoDataUrl = "";
+
+        function fillForm(data) {
+            currentPhotoDataUrl = data.photoUrl || "";
+            document.getElementById('photoPreview').src = currentPhotoDataUrl || NO_IMAGE;
+            FIELDS.forEach(f => { document.getElementById(f).value = data[f] || ""; });
+        }
+
+        // ログイン後に名刺の一覧を読み込み、前回編集した名刺（なければ先頭）を表示する
+        async function loadCardList(selectId) {
+            const sel = document.getElementById('cardSelect');
+            try {
+                const snap = await getDocs(collection(db, "cards"));
+                const ids = snap.docs.map(d => d.id).sort();
+                sel.innerHTML = "";
+                ids.forEach(id => sel.add(new Option(id, id)));
+                sel.add(new Option("＋ 新しい名刺を作る", NEW_CARD));
+
+                let last = null;
+                try { last = localStorage.getItem(LAST_CARD_KEY); } catch (e) {}
+                const pick = [selectId, last].find(id => id && ids.includes(id)) || ids[0] || NEW_CARD;
+                sel.value = pick;
+                await selectCard(pick);
+            } catch (e) {
+                sel.innerHTML = "";
+                sel.add(new Option("読み込みに失敗しました", ""));
+                alert("名刺の一覧を読み込めませんでした: " + e.message);
+            }
+        }
+
+        window.selectCard = async function(id) {
+            const isNew = id === NEW_CARD;
+            const idInput = document.getElementById('cardId');
+            document.getElementById('newIdArea').hidden = !isNew;
+            document.getElementById('statusMessage').style.display = 'none';
+            if (isNew) {
+                idInput.value = "";
+                fillForm({});
+                return;
+            }
+            idInput.value = id;
+            try { localStorage.setItem(LAST_CARD_KEY, id); } catch (e) {}
+            const docSnap = await getDoc(doc(db, "cards", id));
+            fillForm(docSnap.exists() ? docSnap.data() : {});
+        }
 
         document.getElementById('photoUpload').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -194,6 +246,10 @@
             if(!cardId) { alert("IDを入力してください"); return; }
             if(!CARD_ID_PATTERN.test(cardId)) { alert("IDは半角英数字・ハイフン・アンダーバーの40文字以内で入力してください"); return; }
             if(!isAdmin(auth.currentUser)) { alert("編集権限のあるアカウントでログインしてください"); return; }
+            if (document.getElementById('cardSelect').value === NEW_CARD) {
+                const exists = [...document.getElementById('cardSelect').options].some(o => o.value === cardId);
+                if (exists && !confirm("ID「" + cardId + "」の名刺はすでにあります。上書きしますか？")) return;
+            }
 
             statusEl.innerText = "データを保存中...";
             statusEl.style.display = 'block'; 
@@ -216,46 +272,19 @@
                     line: document.getElementById('line').value
                 });
                 
-                statusEl.innerText = "✅ 保存完了！即座に反映されました。"; 
+                statusEl.innerText = "✅ 保存完了！即座に反映されました。";
                 statusEl.classList.add('success');
+                // 新しく作った名刺は一覧に追加して選択状態にする
+                if (document.getElementById('cardSelect').value === NEW_CARD) {
+                    await loadCardList(cardId);
+                    statusEl.style.display = 'block';
+                }
             } catch (e) { 
                 statusEl.innerText = "❌ エラー: " + e.message; 
                 statusEl.classList.add('error'); 
             }
         }
 
-        window.loadData = async function() {
-            const cardId = document.getElementById('cardId').value;
-            if(!cardId) { alert("IDを入力してください"); return; }
-            if(!CARD_ID_PATTERN.test(cardId)) { alert("IDは半角英数字・ハイフン・アンダーバーの40文字以内で入力してください"); return; }
-            const docRef = doc(db, "cards", cardId);
-            const docSnap = await getDoc(docRef);
-
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                
-                currentPhotoDataUrl = data.photoUrl || "";
-                if(currentPhotoDataUrl) {
-                    document.getElementById('photoPreview').src = currentPhotoDataUrl;
-                } else {
-                    document.getElementById('photoPreview').src = "https://via.placeholder.com/150?text=NO+IMG";
-                }
-
-                document.getElementById('name').value = data.name || "";
-                document.getElementById('job').value = data.job || "";
-                document.getElementById('company').value = data.company || "";
-                document.getElementById('email').value = data.email || "";
-                document.getElementById('phone').value = data.phone || "";
-                document.getElementById('bio').value = data.bio || "";
-                document.getElementById('website').value = data.website || "";
-                document.getElementById('twitter').value = data.twitter || "";
-                document.getElementById('instagram').value = data.instagram || "";
-                document.getElementById('github').value = data.github || "";
-                document.getElementById('youtube').value = data.youtube || "";
-                document.getElementById('line').value = data.line || "";
-                alert("データを読み込みました");
-            } else { alert("まだデータがありません。新しく保存してください。"); }
-        }
     </script>
 </body>
 </html>
